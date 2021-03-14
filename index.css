@@ -1,0 +1,12 @@
+body
+{
+    margin: 0px;
+}
+
+p
+{
+    height: 90px;
+    line-height: 90px;
+    text-align: center;
+    vertical-align: center;
+}
