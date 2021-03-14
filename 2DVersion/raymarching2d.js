@@ -39,11 +39,37 @@ function update()
         drawCircle(circle.cx, circle.cy, circle.radius);
     });
 
-    let nearestR = calculateNearestCirlce();
-    if(nearestR > 0)
-        drawCircle(camera.cx, camera.cy, nearestR, 'blue');
+    rayMarching();
 
     drawCircle(mouseX, mouseY, 5);
+}
+
+function rayMarching()
+{
+    let currentPoint = {cx: camera.cx, cy: camera.cy};
+    let dx = mouseX - camera.cx;
+    let dy = mouseY - camera.cy;
+    let len = Math.sqrt(dx * dx + dy * dy);
+    dx /= len;
+    dy /= len;
+
+    for(let iteration = 0; iteration < 50; ++iteration)
+    {
+        let nearestR = calculateNearestCirlce(currentPoint.cx, currentPoint.cy);
+        if(nearestR > 0)
+            drawCircle(currentPoint.cx, currentPoint.cy, nearestR, 'blue');
+
+        if(nearestR > clientW * 0.5 || nearestR < 2)
+            break;
+
+        let nx = currentPoint.cx + dx * nearestR;
+        let ny = currentPoint.cy + dy * nearestR;
+
+        drawCircle(nx, ny, 3, 'blue', 'red', true);
+
+        currentPoint.cx = nx;
+        currentPoint.cy = ny;
+    }
 }
 
 function drawCamera()
@@ -76,13 +102,13 @@ function updateCamera(e)
 }
 
 /// returns distance to nearest circle from camera
-function calculateNearestCirlce()
+function calculateNearestCirlce(fromX, fromY)
 {
     // distance to first circle in array
-    let minD = Math.hypot(camera.cx - circles[0].cx, camera.cy - circles[0].cy) - circles[0].radius;
+    let minD = Math.hypot(fromX - circles[0].cx, fromY - circles[0].cy) - circles[0].radius;
     for(let i = 1; i < circles.length; ++i)
     {
-        let currentD = Math.hypot(camera.cx - circles[i].cx, camera.cy - circles[i].cy) - circles[i].radius;
+        let currentD = Math.hypot(fromX - circles[i].cx, fromY - circles[i].cy) - circles[i].radius;
         if(minD > currentD)
         {
             minD = currentD
