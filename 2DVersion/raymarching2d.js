@@ -5,7 +5,7 @@ let clientH = 0;
 let ctx = null;
 let camera = {cx: 0, cy: 0};
 
-let circles = [];
+let objects = [];
 
 $(document).ready(function()
 {
@@ -25,18 +25,25 @@ $(document).ready(function()
     document.addEventListener('mousedown', updateCamera, false);
     setInterval(update, 15);
     
-    circles = [
-        {cx: clientW * 0.6, cy: clientH * 0.4, radius: clientW * 0.05},
-        {cx: clientW * 0.3, cy: clientH * 0.7, radius: clientW * 0.03}
+    objects = [
+        {type: "circle", cx: clientW * 0.6, cy: clientH * 0.4, radius: clientW * 0.08},
+        {type: "circle", cx: clientW * 0.3, cy: clientH * 0.7, radius: clientW * 0.1},
+        {type: "square", cx: clientW * 0.4, cy: clientH * 0.5, width: clientW * 0.1},
+        {type: "square", cx: clientW * 0.8, cy: clientH * 0.6, width: clientW * 0.15},
     ]
 })
 
 function update()
 {   
     ctx.clearRect(0, 0, clientW, clientH);
+    ctx.lineWidth = 1.5;
     drawCamera();
-    circles.forEach(circle => {
-        drawCircle(circle.cx, circle.cy, circle.radius);
+    objects.forEach(object => {
+        if(object.type == 'circle')
+            drawCircle(object.cx, object.cy, object.radius, '#334242', '#0E51A7', true);
+        if(object.type == 'square')
+            drawSquare(object.cx, object.cy, object.width, '#334242', '#0E51A7', true);
+            
     });
 
     rayMarching();
@@ -55,9 +62,9 @@ function rayMarching()
 
     for(let iteration = 0; iteration < 50; ++iteration)
     {
-        let nearestR = calculateNearestCirlce(currentPoint.cx, currentPoint.cy);
+        let nearestR = calculateNearestObject(currentPoint.cx, currentPoint.cy);
         if(nearestR > 0)
-            drawCircle(currentPoint.cx, currentPoint.cy, nearestR, 'blue');
+            drawCircle(currentPoint.cx, currentPoint.cy, nearestR, '#FF9E00');
 
         if(nearestR > clientW * 0.5 || nearestR < 2)
             break;
@@ -74,7 +81,7 @@ function rayMarching()
 
 function drawCamera()
 {
-    drawCircle(camera.cx, camera.cy, 10, 'black', 'black', true);
+    drawCircle(camera.cx, camera.cy, 10, 'black', '#334242', true);
 }
 
 function drawCircle(centerX, centerY, radius, 
@@ -84,6 +91,18 @@ function drawCircle(centerX, centerY, radius,
     ctx.strokeStyle = strokeStyle;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    if (fill)
+     ctx.fill();
+    ctx.stroke();
+}
+
+function drawSquare(centerX, centerY, width, 
+    strokeStyle = 'black', fillStyle = 'black', fill = false)
+{
+    ctx.fillStyle = fillStyle;
+    ctx.strokeStyle = strokeStyle;
+    ctx.beginPath();
+    ctx.rect(centerX - width/2, centerY - width/2, width, width);
     if (fill)
      ctx.fill();
     ctx.stroke();
@@ -101,19 +120,52 @@ function updateCamera(e)
     camera.cy = e.pageY;
 }
 
-/// returns distance to nearest circle from camera
-function calculateNearestCirlce(fromX, fromY)
+/// returns distance to nearest object from camera
+function calculateNearestObject(fromX, fromY)
 {
     // distance to first circle in array
-    let minD = Math.hypot(fromX - circles[0].cx, fromY - circles[0].cy) - circles[0].radius;
-    for(let i = 1; i < circles.length; ++i)
+    let minD = Number.MAX_SAFE_INTEGER;
+    for(let i = 0; i < objects.length; ++i)
     {
-        let currentD = Math.hypot(fromX - circles[i].cx, fromY - circles[i].cy) - circles[i].radius;
-        if(minD > currentD)
+        if(objects[i].type == 'circle')
         {
-            minD = currentD
+            let currentD = Math.hypot(fromX - objects[i].cx, fromY - objects[i].cy) - objects[i].radius;
+            if(minD > currentD)
+            {
+                minD = currentD
+            }
+        }
+        else if(objects[i].type == 'square')
+        {
+            let currentD = distanceToSquare(fromX, fromY, objects[i]);
+            if(minD > currentD)
+            {
+                minD = currentD
+            }
         }
     }
-
     return minD;
+}
+
+/// return distance to square from some point
+function distanceToSquare(fromX, fromY, square)
+{
+    // All squares now axis-aligned, so I use tricks for distance
+    let halfWidth = square.width/2;
+    let minX = square.cx - halfWidth;
+    let maxX = square.cx + halfWidth;
+    let minY = square.cy - halfWidth;
+    let maxY = square.cy + halfWidth;
+
+    if(fromX > minX && fromX < maxX)
+    {
+        return Math.abs(fromY - square.cy) - halfWidth;
+    }
+
+    if(fromY > minY && fromY < maxY)
+    {
+        return Math.abs(fromX - square.cx) - halfWidth;
+    }
+
+    return Math.hypot(fromX - square.cx, fromY - square.cy) - Math.sqrt(2) * halfWidth;
 }
