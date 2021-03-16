@@ -161,11 +161,22 @@ function distanceToSquare(fromX, fromY, square)
     {
         return Math.abs(fromY - square.cy) - halfWidth;
     }
-
-    if(fromY > minY && fromY < maxY)
+    else if(fromY > minY && fromY < maxY)
     {
         return Math.abs(fromX - square.cx) - halfWidth;
     }
-
-    return Math.hypot(fromX - square.cx, fromY - square.cy) - Math.sqrt(2) * halfWidth;
+    else
+    {
+        let nvx = minX;
+        if(fromX >= maxX)
+        {
+            nvx = maxX;
+        }
+        let nvy = minY;
+        if(fromY >= maxY)
+        {
+            nvy = maxY;
+        }
+        return Math.hypot(fromX - nvx, fromY - nvy);
+    }
 }
