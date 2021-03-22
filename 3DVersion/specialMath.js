@@ -36,13 +36,6 @@ function vectorProjectionMatrixMultiplication(inputVector, inputProjMatrix)
 
 class Vector3D
 {
-    constructor()
-    {
-        this.x = 0;
-        thix.y = 0;
-        thix.z = 0;
-    }
-
     constructor(ix, iy, iz)
     {
         this.x = ix;
@@ -85,10 +78,11 @@ class Vector3D
 
     normalize()
     {
-        let length = this.length();
+        let length = this.length;
         this.x /= length;
         this.y /= length;
         this.z /= length;
+        return this;
     }
 
     cross(vector)

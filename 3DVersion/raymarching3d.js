@@ -17,16 +17,15 @@ $(document).ready(function()
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    camera = new Camera(screenWidth, screenHeight, 90, 0.1, 100);
-    renderer = new Renderer(camera, objects);
+    camera = new Camera(new Vector3D(0, 0, 0), new Vector3D(0, 0, 1), 
+    new Vector3D(0, 1, 0), screenWidth/screenHeight, 90, 5);
     objects.push(new Sphere(new Vector3D(0, 0, 10), 6));
     objects.push(new Sphere(new Vector3D(12, 10, 7), 6));    
 
     document.addEventListener('mousemove', onMouseMove, false);
-    document.addEventListener('wheel', scroolMouseWheel, false);
 
-    setInterval(update, 10)
-});
+    setInterval(update, 10);
+})
 
 function update()
 {
@@ -39,14 +38,14 @@ function render()
     for(let x = 0; x < screenWidth; ++x)
         for(let y = 0; y < screenHeight; ++y)
         {
-            let res = rayMarching(camera.position, [x - screenWidth/2, y - screenHeight/2, 1]);
+            let res = rayMarching(camera.position, new Vector3D(x - screenWidth/2, y - screenHeight/2, 1));
             if(res)
             {
                 ctx.fillStyle = 'black';
                 ctx.fillRect(x, y, 1, 1);
             }
         }
-    console.log('Rendered', origin);
+    console.log('Rendered', camera.position);
 }
 
 // return true if something's hit by a ray, or false if none
