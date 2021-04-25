@@ -3,7 +3,6 @@ class Sphere{
     #radius = 0;
     constructor(center, radius)
     {
-        this.type = 'Sphere';
         this.#center = center;
         this.#radius = radius;
     }
@@ -16,5 +15,13 @@ class Sphere{
     get radius()
     {
         return this.#radius;
+    }
+
+    calculateDistance(toPoint)
+    {
+        return Math.sqrt(
+            (this.center.x - toPoint.x)**2 +
+            (this.center.y - toPoint.y)**2 +
+            (this.center.z - toPoint.z)**2) - this.radius;
     }
 }

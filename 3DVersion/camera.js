@@ -1,5 +1,4 @@
 class Camera{
-
     #position = new Vector3D();
     #direction = new Vector3D();
     #upVector = new Vector3D();

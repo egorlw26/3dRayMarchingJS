@@ -1,39 +1,3 @@
-function vectorProjectionMatrixMultiplication(inputVector, inputProjMatrix)
-{
-    console.log(inputVector);
-    console.log(inputProjMatrix);
-
-    let outputVector = [
-     inputVector[0] * inputProjMatrix[0][0] +
-     inputVector[1] * inputProjMatrix[1][0] +
-     inputVector[2] * inputProjMatrix[2][0] +
-     inputProjMatrix[3][0],
-     inputVector[0] * inputProjMatrix[0][1] +
-     inputVector[1] * inputProjMatrix[1][1] +
-     inputVector[2] * inputProjMatrix[2][1] +
-     inputProjMatrix[3][1],
-     inputVector[0] * inputProjMatrix[0][2] +
-     inputVector[1] * inputProjMatrix[1][2] +
-     inputVector[2] * inputProjMatrix[2][2] +
-     inputProjMatrix[3][2]
-    ];
-
-    let w =
-     inputVector[0] * inputProjMatrix[0][3] +
-     inputVector[1] * inputProjMatrix[1][3] +
-     inputVector[2] * inputProjMatrix[2][3] +
-     inputProjMatrix[3][3];
-
-     if(w != 0)
-     {
-         outputVector[0] /= w;
-         outputVector[1] /= w;
-         outputVector[2] /= w;
-     }
-
-     return outputVector;
-}
-
 class Vector3D
 {
     constructor(ix, iy, iz)
@@ -41,11 +5,6 @@ class Vector3D
         this.x = ix;
         this.y = iy;
         this.z = iz;
-    }
-    
-    valueOf()
-    {
-        return [this.x, this.y, this.z];
     }
 
     copy(vector)

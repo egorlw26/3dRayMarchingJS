@@ -73,23 +73,10 @@ function rayMarching(origin, direction)
 
 function calculateNearestObjectDistance(fromPoint)
 {  
-    let minD = Number.MAX_SAFE_INTEGER;
+    let minD = Number.MAX_VALUE;
     objects.forEach(object => {
-        switch(object.type)
-        {
-            case "Sphere":
-                let localD = Math.sqrt(
-                    (object.center.x - fromPoint.x)**2 +
-                    (object.center.y - fromPoint.y)**2 +
-                    (object.center.z - fromPoint.z)**2) - object.radius;
-                if(localD < minD)
-                {
-                    minD = localD;
-                }
-                break;
-            default:
-                break;
-        }
+        let localD = object.calculateDistance(fromPoint);
+        minD = Math.min(localD, minD);
     });
 
     return minD;
