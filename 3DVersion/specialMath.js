@@ -43,6 +43,11 @@ class Vector3D
         this.z = iz;
     }
     
+    valueOf()
+    {
+        return [this.x, this.y, this.z];
+    }
+
     copy(vector)
     {
         return new Vector3D(vector.x, vector.y, vector.z);
@@ -82,7 +87,12 @@ class Vector3D
         this.x /= length;
         this.y /= length;
         this.z /= length;
-        return this;
+    }
+
+    getNormalized()
+    {
+        let length = this.length;
+        return new Vector3D (this.x / length, this.y / length, this.z / length);
     }
 
     cross(vector)
@@ -94,7 +104,7 @@ class Vector3D
         return res;
     }
 
-    multiplyByNumber(number)
+    multiply(number)
     {
         return new Vector3D(
             this.x * number,
