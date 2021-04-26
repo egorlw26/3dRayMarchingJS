@@ -17,14 +17,19 @@ $(document).ready(function()
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    camera = new Camera(new Vector3D(0, 0, -10), new Vector3D(0, 0, 1), 
+    camera = new Camera(new Vector3D(0, 1, -10), new Vector3D(0, 0, 1), 
     new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 0.5);
 
-    objects.push(new Sphere(new Vector3D(3, -3, 0), 0.5));    
-    objects.push(new Sphere(new Vector3D(0, 0, 0), 0.5));    
-    objects.push(new Sphere(new Vector3D(-3, -3, 0), 0.5));    
-    objects.push(new Sphere(new Vector3D(3, 3, 0), 0.5));    
-    objects.push(new Sphere(new Vector3D(-3, 3, 0), 0.5));    
+    objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), new Material('red')));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(3, -3, 0), 0.5), new Material('green')));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(-3, -3, 0), 0.5), new Material('blue')));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(3, 3, 0), 0.5), new Material('violet')));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), new Material('yellow')));
+
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, 1, 0), new Vector3D(0, -5, 0)), new Material('orange')));
+    objects.push(new RenderableObject(new Plane(new Vector3D(1, 0, 0), new Vector3D(-5, -5, 0)), new Material('blue')));
+    objects.push(new RenderableObject(new Plane(new Vector3D(1, 0, 0), new Vector3D(5, -5, 0)), new Material('yellow')));
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, 1, 0), new Vector3D(0, 5, 0)), new Material('orange')));
 
     document.addEventListener('mousemove', onMouseMove, false);
 
@@ -43,10 +48,10 @@ function render()
         for(let y = 0; y < screenHeight; ++y)
         {
             let res = rayMarching(camera.position, 
-                camera.getRayDirection((x)/screenWidth, (y)/screenHeight));
-            if(res)
+                camera.getRayDirection((x)/screenWidth, (screenHeight - y)/screenHeight));
+            if(res != null)
             {
-                ctx.fillStyle = 'black';
+                ctx.fillStyle = res.material.color;
                 ctx.fillRect(x, y, 1, 1);
             }
         }
@@ -56,30 +61,41 @@ function render()
 // return true if something's hit by a ray, or false if none
 function rayMarching(origin, direction)
 {
+    let res = new IntersectionInfo();
     let currPoint = Object.create(origin);
     direction.normalize();
-    let nearestDist = calculateNearestObjectDistance(currPoint);
-    while(nearestDist < 100)
+    let nearest = calculateNearest(currPoint);
+    while(currPoint.subtract(origin).length < 100)
     {
-        if(nearestDist < 0.1)
+        if(nearest[0] < 0.01)
         {
-            return true;
+            res.material = objects[nearest[1]].material;
+            return res;
         }
-        currPoint = currPoint.add(direction.multiply(nearestDist));
-        nearestDist = calculateNearestObjectDistance(currPoint);
+        currPoint = currPoint.add(direction.multiply(nearest[0]));
+        nearest = calculateNearest(currPoint);
     }
-    return false;
+    return null;
 }
 
-function calculateNearestObjectDistance(fromPoint)
+function calculateNearest(fromPoint)
 {  
+    let index = null;
     let minD = Number.MAX_VALUE;
-    objects.forEach(object => {
-        let localD = object.calculateDistance(fromPoint);
-        minD = Math.min(localD, minD);
-    });
 
-    return minD;
+    // fromPoint.x = (fromPoint.x % 3 + 3) % 3;
+    // fromPoint.y = (fromPoint.y % 3 + 3) % 3;
+
+    for(let i = 0; i < objects.length; ++i)
+    {
+        let localD = objects[i].object.calculateDistance(fromPoint);
+        if(localD < minD)
+        {
+            minD = localD;
+            index = i;
+        }
+    }
+    return [minD, index];
 }
 
 function onMouseMove(e)

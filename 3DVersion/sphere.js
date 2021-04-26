@@ -7,15 +7,8 @@ class Sphere{
         this.#radius = radius;
     }
 
-    get center()
-    {
-        return this.#center;
-    }
-
-    get radius()
-    {
-        return this.#radius;
-    }
+    get center() {return this.#center;}
+    get radius() { return this.#radius; }
 
     calculateDistance(toPoint)
     {
