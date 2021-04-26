@@ -17,4 +17,9 @@ class Sphere{
             (this.center.y - toPoint.y)**2 +
             (this.center.z - toPoint.z)**2) - this.radius;
     }
+
+    getNormal(point)
+    {
+        return point.subtract(this.#center).getNormalized();
+    }
 }

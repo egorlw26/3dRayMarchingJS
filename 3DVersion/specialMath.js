@@ -72,3 +72,7 @@ class Vector3D
         );
     }
 }
+
+function mClamp(value, min, max) {
+    return Math.max(Math.min(value, max), min);
+}

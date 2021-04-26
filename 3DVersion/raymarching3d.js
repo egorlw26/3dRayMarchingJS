@@ -1,5 +1,6 @@
 let ctx = null;
 let objects = [];
+let lightSources = [];
 let screenWidth = 0;
 let screenHeight = 0;
 let camera = null;
@@ -18,18 +19,19 @@ $(document).ready(function()
     canvas.height = screenHeight;
 
     camera = new Camera(new Vector3D(0, 1, -10), new Vector3D(0, 0, 1), 
-    new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 0.5);
+    new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 1);
 
-    objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), new Material('red')));
-    objects.push(new RenderableObject(new Sphere(new Vector3D(3, -3, 0), 0.5), new Material('green')));
-    objects.push(new RenderableObject(new Sphere(new Vector3D(-3, -3, 0), 0.5), new Material('blue')));
-    objects.push(new RenderableObject(new Sphere(new Vector3D(3, 3, 0), 0.5), new Material('violet')));
-    objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), new Material('yellow')));
+    const redMaterial = new Material(new Color(255, 0, 0, 255), new Vector3D(0.5, 0, 0));
+    const greenMaterial = new Material(new Color(0, 255, 0, 255), new Vector3D(0, 0.7, 0));
+    const blueMaterial = new Material(new Color(0, 0, 255, 255), new Vector3D(0, 0, 0.6));
 
-    objects.push(new RenderableObject(new Plane(new Vector3D(0, 1, 0), new Vector3D(0, -5, 0)), new Material('orange')));
-    objects.push(new RenderableObject(new Plane(new Vector3D(1, 0, 0), new Vector3D(-5, -5, 0)), new Material('blue')));
-    objects.push(new RenderableObject(new Plane(new Vector3D(1, 0, 0), new Vector3D(5, -5, 0)), new Material('yellow')));
-    objects.push(new RenderableObject(new Plane(new Vector3D(0, 1, 0), new Vector3D(0, 5, 0)), new Material('orange')));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), redMaterial));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(0, -1, 2), 0.5), greenMaterial));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), blueMaterial));
+
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
+
+    lightSources.push(new LightSource(new Vector3D(0, 20, 0), 2, new Color(255, 255, 255, 255)));
 
     document.addEventListener('mousemove', onMouseMove, false);
 
@@ -44,32 +46,44 @@ function update()
 
 function render()
 {
+    imageData = ctx.getImageData(0, 0, screenWidth, screenHeight);
+    data = imageData.data;
     for(let x = 0; x < screenWidth; ++x)
         for(let y = 0; y < screenHeight; ++y)
         {
             let res = rayMarching(camera.position, 
-                camera.getRayDirection((x)/screenWidth, (screenHeight - y)/screenHeight));
+                camera.getRayDirection((x)/screenWidth, (screenHeight - y)/screenHeight), 100);
             if(res != null)
             {
-                ctx.fillStyle = res.material.color;
-                ctx.fillRect(x, y, 1, 1);
+                let lightNormal = lightSources[0].position.subtract(res.point).getNormalized();
+                let diffuseCoef = Math.max(0, lightNormal.dot(res.intersectObjectNormal));
+                let resColor = res.material.calculateColor(diffuseCoef);
+
+                let pixelIndex = 4* (y * screenWidth + x);
+                data[pixelIndex] = resColor.r;
+                data[pixelIndex + 1] = resColor.g;
+                data[pixelIndex + 2] = resColor.b;
+                data[pixelIndex + 3] = resColor.a;
             }
         }
+        ctx.putImageData(imageData, 0, 0);
         console.log("Rendered!");
 }
 
 // return true if something's hit by a ray, or false if none
-function rayMarching(origin, direction)
+function rayMarching(origin, direction, iterations)
 {
     let res = new IntersectionInfo();
     let currPoint = Object.create(origin);
     direction.normalize();
     let nearest = calculateNearest(currPoint);
-    while(currPoint.subtract(origin).length < 100)
+    for(let i = 0; i < iterations; ++i)
     {
         if(nearest[0] < 0.01)
         {
             res.material = objects[nearest[1]].material;
+            res.intersectObjectNormal = objects[nearest[1]].object.getNormal(currPoint);
+            res.point = currPoint;
             return res;
         }
         currPoint = currPoint.add(direction.multiply(nearest[0]));
@@ -82,9 +96,6 @@ function calculateNearest(fromPoint)
 {  
     let index = null;
     let minD = Number.MAX_VALUE;
-
-    // fromPoint.x = (fromPoint.x % 3 + 3) % 3;
-    // fromPoint.y = (fromPoint.y % 3 + 3) % 3;
 
     for(let i = 0; i < objects.length; ++i)
     {
