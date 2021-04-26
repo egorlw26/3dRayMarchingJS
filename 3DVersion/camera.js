@@ -33,8 +33,11 @@ class Camera{
     {
         return this.u.multiply(x)
             .add(this.v.multiply(y))
-            .subtract(this.corner).getNormalized();
+            .subtract(this.corner);
     }
+
+    get upVector() {return this.#upVector;}
+    set upVector(vector) {this.#upVector = vector; }
 
     get position()
     {

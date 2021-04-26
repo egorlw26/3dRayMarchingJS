@@ -18,12 +18,17 @@ $(document).ready(function()
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    camera = new Camera(new Vector3D(0, 1, -10), new Vector3D(0, 0, 1), 
-    new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 1);
+    setup();
 
-    const redMaterial = new Material(new Color(255, 0, 0, 255), new Vector3D(0.5, 0, 0));
-    const greenMaterial = new Material(new Color(0, 255, 0, 255), new Vector3D(0, 0.7, 0));
-    const blueMaterial = new Material(new Color(0, 0, 255, 255), new Vector3D(0, 0, 0.6));
+    document.addEventListener('mousemove', onMouseMove, false);
+
+    setInterval(update, 1);
+})
+
+function setup()
+{
+    camera = new Camera(new Vector3D(0, 0, -10), new Vector3D(0, 0, 1), 
+    new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 1);
 
     objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), redMaterial));
     objects.push(new RenderableObject(new Sphere(new Vector3D(0, -1, 2), 0.5), greenMaterial));
@@ -31,12 +36,8 @@ $(document).ready(function()
 
     objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
 
-    lightSources.push(new LightSource(new Vector3D(0, 20, 0), 2, new Color(255, 255, 255, 255)));
-
-    document.addEventListener('mousemove', onMouseMove, false);
-
-    setInterval(update, 10);
-})
+    lightSources.push(new LightSource(new Vector3D(0, 1, -1), 2, new Color(255, 255, 255, 255)));
+}
 
 function update()
 {
@@ -46,13 +47,14 @@ function update()
 
 function render()
 {
+    let startTime = (new Date()).getTime();
     imageData = ctx.getImageData(0, 0, screenWidth, screenHeight);
     data = imageData.data;
     for(let x = 0; x < screenWidth; ++x)
         for(let y = 0; y < screenHeight; ++y)
         {
             let res = rayMarching(camera.position, 
-                camera.getRayDirection((x)/screenWidth, (screenHeight - y)/screenHeight), 100);
+                camera.getRayDirection(x/screenWidth, (screenHeight - y)/screenHeight), 100);
             if(res != null)
             {
                 let lightNormal = lightSources[0].position.subtract(res.point).getNormalized();
@@ -67,10 +69,11 @@ function render()
             }
         }
         ctx.putImageData(imageData, 0, 0);
+        let endTime = (new Date()).getTime();
+        console.log((endTime - startTime) / 1000, "seconds for frame");
         console.log("Rendered!");
 }
 
-// return true if something's hit by a ray, or false if none
 function rayMarching(origin, direction, iterations)
 {
     let res = new IntersectionInfo();
@@ -79,7 +82,7 @@ function rayMarching(origin, direction, iterations)
     let nearest = calculateNearest(currPoint);
     for(let i = 0; i < iterations; ++i)
     {
-        if(nearest[0] < 0.01)
+        if(nearest[0] < 0.05)
         {
             res.material = objects[nearest[1]].material;
             res.intersectObjectNormal = objects[nearest[1]].object.getNormal(currPoint);
