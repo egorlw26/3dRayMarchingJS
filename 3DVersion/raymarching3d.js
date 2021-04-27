@@ -31,12 +31,13 @@ function setup()
     new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 1);
 
     objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), redMaterial));
-    objects.push(new RenderableObject(new Sphere(new Vector3D(0, -1, 2), 0.5), greenMaterial));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(0, -3, 0), 2), greenMaterial));
     objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), blueMaterial));
 
     objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
 
-    lightSources.push(new LightSource(new Vector3D(0, 1, -1), 2, new Color(255, 255, 255, 255)));
+    lightSources.push(new LightSource(new Vector3D(0, 5, 0), 2, new Color(255, 255, 255, 255)));
+    lightSources.push(new LightSource(new Vector3D(-3, 2, 0), 2, new Color(255, 255, 255, 255)));
 }
 
 function update()
@@ -48,24 +49,17 @@ function update()
 function render()
 {
     let startTime = (new Date()).getTime();
+
     imageData = ctx.getImageData(0, 0, screenWidth, screenHeight);
     data = imageData.data;
+
     for(let x = 0; x < screenWidth; ++x)
         for(let y = 0; y < screenHeight; ++y)
         {
-            let res = rayMarching(camera.position, 
-                camera.getRayDirection(x/screenWidth, (screenHeight - y)/screenHeight), 100);
-            if(res != null)
+            let resColor = calculatePixelColor(x, y);
+            if(resColor != null)
             {
-                let lightNormal = lightSources[0].position.subtract(res.point).getNormalized();
-                let diffuseCoef = Math.max(0, lightNormal.dot(res.intersectObjectNormal));
-                let resColor = res.material.calculateColor(diffuseCoef);
-
-                let pixelIndex = 4* (y * screenWidth + x);
-                data[pixelIndex] = resColor.r;
-                data[pixelIndex + 1] = resColor.g;
-                data[pixelIndex + 2] = resColor.b;
-                data[pixelIndex + 3] = resColor.a;
+                setPixel(x, y, resColor, data);
             }
         }
         ctx.putImageData(imageData, 0, 0);
@@ -74,9 +68,40 @@ function render()
         console.log("Rendered!");
 }
 
+function calculatePixelColor(x, y)
+{
+    let res = rayMarching(camera.position, 
+        camera.getRayDirection(x/screenWidth, (screenHeight - y)/screenHeight), 100);
+    if(res != null)
+    {
+        let diffuseCoef = 0;
+        lightSources.forEach(lightSource => 
+        {
+            let lightNormal = lightSource.position.subtract(res.point).getNormalized();
+            let shadowRes = rayMarching(res.point.add(lightNormal), lightNormal, 10);
+            if(shadowRes == null || lightNormal.dot(lightSource.position.subtract(shadowRes.point)) < 0)
+            {
+                diffuseCoef += Math.max(0, lightNormal.dot(res.intersectObjectNormal));
+            }
+        });
+
+        diffuseCoef /= lightSources.length;
+        let resColor = res.material.calculateColor(diffuseCoef);        
+        return resColor;
+    }
+}
+
+function setPixel(x, y, color, data)
+{
+    let pixelIndex = 4* (y * screenWidth + x);
+    data[pixelIndex] = color.r;
+    data[pixelIndex + 1] = color.g;
+    data[pixelIndex + 2] = color.b;
+    data[pixelIndex + 3] = color.a;
+}
+
 function rayMarching(origin, direction, iterations)
 {
-    let res = new IntersectionInfo();
     let currPoint = Object.create(origin);
     direction.normalize();
     let nearest = calculateNearest(currPoint);
@@ -84,6 +109,7 @@ function rayMarching(origin, direction, iterations)
     {
         if(nearest[0] < 0.05)
         {
+            let res = new IntersectionInfo();
             res.material = objects[nearest[1]].material;
             res.intersectObjectNormal = objects[nearest[1]].object.getNormal(currPoint);
             res.point = currPoint;

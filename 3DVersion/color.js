@@ -17,4 +17,9 @@ class Color
     get g() {return this.#green;}
     get b() {return this.#blue;}
     get a() {return this.#alpha;}
+
+    set r(value) {this.#red = value;}
+    set g(value) {this.#green = value;}
+    set b(value) {this.#blue = value;}
+    set a(value) {this.#alpha = value;}
 }
