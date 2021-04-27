@@ -8,6 +8,9 @@ let renderer = null;
 let mouseX = 0;
 let mouseY = 0;
 
+const normalIterations = 50;
+const shadowIterations = 10;
+
 $(document).ready(function()
 {
     let canvas = document.getElementById("cnv");
@@ -34,10 +37,10 @@ function setup()
     objects.push(new RenderableObject(new Sphere(new Vector3D(0, -3, 0), 2), greenMaterial));
     objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), blueMaterial));
 
-    objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
+    // objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
 
-    lightSources.push(new LightSource(new Vector3D(0, 5, 0), 2, new Color(255, 255, 255, 255)));
-    lightSources.push(new LightSource(new Vector3D(-3, 2, 0), 2, new Color(255, 255, 255, 255)));
+    lightSources.push(new LightSource(new Vector3D(0, 5, 0), 10, new Color(255, 255, 255, 255)));
+    // lightSources.push(new LightSource(new Vector3D(-3, 2, 0), 1, new Color(255, 255, 255, 255)));
 }
 
 function update()
@@ -71,17 +74,19 @@ function render()
 function calculatePixelColor(x, y)
 {
     let res = rayMarching(camera.position, 
-        camera.getRayDirection(x/screenWidth, (screenHeight - y)/screenHeight), 100);
+        camera.getRayDirection(x/screenWidth, (screenHeight - y)/screenHeight), normalIterations);
     if(res != null)
     {
         let diffuseCoef = 0;
         lightSources.forEach(lightSource => 
         {
             let lightNormal = lightSource.position.subtract(res.point).getNormalized();
-            let shadowRes = rayMarching(res.point.add(lightNormal), lightNormal, 10);
+            let shadowRes = rayMarching(res.point.add(lightNormal), lightNormal, shadowIterations);
+            
             if(shadowRes == null || lightNormal.dot(lightSource.position.subtract(shadowRes.point)) < 0)
             {
-                diffuseCoef += Math.max(0, lightNormal.dot(res.intersectObjectNormal));
+                let lightCoef = lightSource.calculatePower(res.point);
+                diffuseCoef += Math.max(0, lightNormal.dot(res.intersectObjectNormal) * lightCoef);
             }
         });
 
