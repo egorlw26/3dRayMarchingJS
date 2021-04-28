@@ -39,8 +39,9 @@ class Camera{
     get upVector() {return this.#upVector;}
     set upVector(vector) {this.#upVector = vector; }
 
-    get position()
-    {
-        return this.#position;
-    }
+    get direction() {return this.#direction;}
+    set direction(vector) {this.#direction = vector; }
+
+    get position() { return this.#position; }
+    set position(position) { this.#position = position; }
 }

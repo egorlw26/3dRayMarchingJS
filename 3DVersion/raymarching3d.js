@@ -8,8 +8,9 @@ let renderer = null;
 let mouseX = 0;
 let mouseY = 0;
 
-const normalIterations = 50;
-const shadowIterations = 10;
+const normalIterations = 100;
+const shadowIterations = 25;
+const rayMarchingAccuracy = 0.05
 
 $(document).ready(function()
 {
@@ -21,26 +22,30 @@ $(document).ready(function()
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    setup();
+    firstSceneSetup();
 
     document.addEventListener('mousemove', onMouseMove, false);
 
     setInterval(update, 1);
 })
 
-function setup()
+function firstSceneSetup()
 {
-    camera = new Camera(new Vector3D(0, 0, -10), new Vector3D(0, 0, 1), 
+    camera = new Camera(new Vector3D(0, 1, -10), new Vector3D(0, 0, 1), 
     new Vector3D(0, 1, 0), screenWidth/screenHeight, 45, 1);
 
-    objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0, 0), 0.5), redMaterial));
+    objects.push(new RenderableObject(new Sphere(new Vector3D(0, 0.5, 0), 0.5), blueMaterial));
     objects.push(new RenderableObject(new Sphere(new Vector3D(0, -3, 0), 2), greenMaterial));
     objects.push(new RenderableObject(new Sphere(new Vector3D(-3, 3, 0), 0.5), blueMaterial));
 
-    // objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 10), new Vector3D(0, 0, -1)), blueMaterial));
+    objects.push(new RenderableObject(new Plane(new Vector3D(-6, 0, 0), new Vector3D(1, 0, 0)), blueMaterial));
+    objects.push(new RenderableObject(new Plane(new Vector3D(6, 0, 0), new Vector3D(-1, 0, 0)), blueMaterial));
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, 6, 0), new Vector3D(0, -1, 0)), redMaterial));
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, -6, 0), new Vector3D(0, 1, 0)), redMaterial));
+    objects.push(new RenderableObject(new Plane(new Vector3D(0, 0, 25), new Vector3D(0, 0, -1)), blackMaterial));
 
     lightSources.push(new LightSource(new Vector3D(0, 5, 0), 10, new Color(255, 255, 255, 255)));
-    // lightSources.push(new LightSource(new Vector3D(-3, 2, 0), 1, new Color(255, 255, 255, 255)));
+    lightSources.push(new LightSource(new Vector3D(-3, 2, 0), 10, new Color(255, 255, 255, 255)));
 }
 
 function update()
@@ -68,7 +73,6 @@ function render()
         ctx.putImageData(imageData, 0, 0);
         let endTime = (new Date()).getTime();
         console.log((endTime - startTime) / 1000, "seconds for frame");
-        console.log("Rendered!");
 }
 
 function calculatePixelColor(x, y)
@@ -112,7 +116,7 @@ function rayMarching(origin, direction, iterations)
     let nearest = calculateNearest(currPoint);
     for(let i = 0; i < iterations; ++i)
     {
-        if(nearest[0] < 0.05)
+        if(nearest[0] < rayMarchingAccuracy)
         {
             let res = new IntersectionInfo();
             res.material = objects[nearest[1]].material;
